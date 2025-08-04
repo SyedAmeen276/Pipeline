@@ -1,0 +1,32 @@
+{
+  "event_id": "evt126",
+  "payload": {
+    "temperature": 30.1,
+    "humidity": 70,
+    "status": "OK",
+    "tags": ["sensor", "indoor"]
+  },
+  "source": "sensorB",
+  "type": "temperature",
+  "metadata": {
+    "location": "basement",
+    "batch": 43,
+    "priority": 4
+  }
+}
+{
+  "event_id": "evt126",
+  "payload": {
+    "temperature": 30.1,
+    "humidity": 70,
+    "status": "OK",
+    "tags": ["sensor", "indoor"]
+  },
+  "source": "sensorB",
+  "type": "temperature",
+  "metadata": {
+    "location": "basement",
+    "batch": 43,
+    "priority": 4
+  }
+}
