@@ -8,8 +8,6 @@ std::shared_ptr<DataPacket> FlinkStage::Process(std::shared_ptr<DataPacket> pkt)
     try
     {
        json jsonParsed = json::parse(pkt->m_payload);
-       std::cout << "[Success] Flink start JSON:\n"
-                 << jsonParsed.dump(2) << std::endl;
        if (!jsonParsed.contains("event_id"))
        {
            std::cerr << "[FileSinkStage] Missing 'event_id' in payload\n";
@@ -28,8 +26,7 @@ std::shared_ptr<DataPacket> FlinkStage::Process(std::shared_ptr<DataPacket> pkt)
            std::cerr << "[FileSinkStage] Cannot open file: " << filepath << "\n";
            return nullptr;
        }
-       std::cout << "[Success] Flink JSON:\n"
-                 << jsonParsed.dump(2) << std::endl;
+       
        out << jsonParsed.dump(2) << std::endl;
        out.close();
     }

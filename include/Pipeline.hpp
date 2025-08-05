@@ -1,30 +1,35 @@
-//Pipeline.hpp
 #pragma once
+#include <vector>
+#include <memory>
+#include <thread>
+#include <atomic>
+#include "PipelineStage.hpp"
+#include "DataPacket.hpp"
+#include "ThreadSafeQueue.hpp"
 
-#include "PipelineBase.hpp"
-#include<vector>
-#include<thread>
-#include<atomic>
-#include <boost/lockfree/spsc_queue.hpp>
-
-class Pipeline: public PipelineBase
+class Pipeline
 {
 public:
+    using PacketPtr = std::shared_ptr<DataPacket>;
+
     Pipeline();
     ~Pipeline();
 
-    void AddStage(std::shared_ptr<PipelineStage> stage) override;
-    void Start() override;
-    void Stop() override;
-    void Push(std::shared_ptr<DataPacket> pkt) override;
+    void AddStage(std::shared_ptr<PipelineStage> stage, size_t numThreads = 1);
+    void Start();
+    void Stop();
+    void Push(PacketPtr pkt);
 
 private:
-    using Queue = boost::lockfree::spsc_queue<std::shared_ptr<DataPacket>>;
-    std::vector<std::shared_ptr<Queue>> m_queue;
+    struct StageContext
+    {
+        std::shared_ptr<PipelineStage> stage;
+        std::shared_ptr<ThreadSafeQueue<PacketPtr>> inputQueue;
+        std::shared_ptr<ThreadSafeQueue<PacketPtr>> outputQueue;
+        std::vector<std::thread> workers;
+        size_t numThreads = 1;
+    };
 
-    std::vector<std::shared_ptr<PipelineStage>> m_stages;
-    std::vector<std::thread> m_threads;
+    std::vector<StageContext> m_stages;
     std::atomic<bool> m_running;
 };
-
-

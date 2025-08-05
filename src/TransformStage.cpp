@@ -8,8 +8,6 @@ std::shared_ptr<DataPacket> TransformStage::Process(std::shared_ptr<DataPacket> 
     auto jsonParsed = json::parse(pkt->m_payload);
 
     json flat;
-    std::cout << "[Success] TransformStage start JSON:\n"
-              << jsonParsed.dump(2) << std::endl;
     flat["event_id"] = jsonParsed["event_id"];
     flat["event_type"] = jsonParsed["type"];
     flat["temperature"] = jsonParsed["payload"]["temperature"];

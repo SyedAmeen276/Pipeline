@@ -1,16 +1,21 @@
-//Pipeline.cpp
 #include "Pipeline.hpp"
+#include <iostream>
 
-Pipeline::Pipeline() : m_running(false) {};
+Pipeline::Pipeline() : m_running(false) {}
 
 Pipeline::~Pipeline()
 {
     Stop();
 }
 
-void Pipeline::AddStage(std::shared_ptr<PipelineStage> stage)
+void Pipeline::AddStage(std::shared_ptr<PipelineStage> stage, size_t numThreads)
 {
-    m_stages.push_back(stage);
+    StageContext ctx;
+    ctx.stage = stage;
+    ctx.inputQueue = std::make_shared<ThreadSafeQueue<PacketPtr>>();
+    ctx.outputQueue = nullptr;
+    ctx.numThreads = numThreads;
+    m_stages.push_back(std::move(ctx));
 }
 
 void Pipeline::Start()
@@ -18,43 +23,37 @@ void Pipeline::Start()
     if (m_stages.empty())
         return;
 
-    m_running = true;
-
-    m_queue.resize(m_stages.size() - 1);
-    for (auto &q : m_queue)
+    for (size_t i = 0; i + 1 < m_stages.size(); ++i)
     {
-        q = std::make_shared<Queue>(1024);
+        m_stages[i].outputQueue = m_stages[i + 1].inputQueue;
     }
 
-    for (size_t i = 0; i < m_stages.size(); ++i)
+    m_running = true;
+
+    for (auto &ctx : m_stages)
     {
-        auto inputQueue = (i == 0) ? nullptr : m_queue[i - 1];
-        auto outputQueue = (i == m_stages.size() - 1) ? nullptr : m_queue[i];
+        ctx.stage->Initalize();
 
-        m_threads.emplace_back([this, stage = m_stages[i], inputQueue, outputQueue]()
-                              {
-            stage->Initalize();
+        for (size_t i = 0; i < ctx.numThreads; ++i)
+        {
+            ctx.workers.emplace_back([this, &ctx]()
+                                     {
+                while (m_running)
+                {
+                    PacketPtr pkt;
+                    ctx.inputQueue->wait_and_pop(pkt);
 
-            while (m_running) {
-                std::shared_ptr<DataPacket> pkt;
-
-                if (inputQueue) {
-                    if (!inputQueue->pop(pkt)) {
-                        std::this_thread::yield();
+                    if (!pkt)
                         continue;
-                    }
-                }
 
-                auto result = stage->Process(pkt);
-                if (result && outputQueue) {
-                    while (!outputQueue->push(result)) {
-                        std::this_thread::yield();
-                    }
-                }
-            }
+                    auto result = ctx.stage->Process(pkt);
 
-            stage->Shutdown(); 
-        });
+                    if (result && ctx.outputQueue)
+                    {
+                        ctx.outputQueue->push(result);
+                    }
+                } });
+        }
     }
 }
 
@@ -62,23 +61,26 @@ void Pipeline::Stop()
 {
     m_running = false;
 
-    for (auto &t : m_threads)
+    for (auto &ctx : m_stages)
     {
-        if (t.joinable())
-            t.join();
-    }
+        for (size_t i = 0; i < ctx.numThreads; ++i)
+            ctx.inputQueue->push(nullptr);
 
-    m_threads.clear();
-    m_queue.clear();
+        for (auto &t : ctx.workers)
+        {
+            if (t.joinable())
+                t.join();
+        }
+        ctx.workers.clear();
+
+        ctx.stage->Shutdown();
+    }
 }
 
-void Pipeline::Push(std::shared_ptr<DataPacket> pkt)
+void Pipeline::Push(PacketPtr pkt)
 {
-    if (!m_queue.empty() && m_queue[0])
+    if (!m_stages.empty())
     {
-        while (!m_queue[0]->push(pkt))
-        {
-            std::this_thread::yield();
-        }
+        m_stages.front().inputQueue->push(pkt);
     }
 }

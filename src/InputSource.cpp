@@ -9,7 +9,6 @@ void InputSource::StartReading(PacketHandler handler)
         return; // already running return
     m_running = true;
     m_worker = std::thread([this, handler](){
-        std::cout << "Coming from InputSource:\n"<< std::endl;
         Run(handler); 
     });
 }

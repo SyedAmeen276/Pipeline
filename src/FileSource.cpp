@@ -18,7 +18,6 @@ FileSource::~FileSource()
 void FileSource::Run(PacketHandler handler)
 {
     std::ifstream file(m_filePath);
-    std::cout << "Coming from InputSource:\n"<< std::endl;
     if (!file)
     {
         std::cerr << "[Error] Failed to open file: " << m_filePath << std::endl;
@@ -27,8 +26,7 @@ void FileSource::Run(PacketHandler handler)
 
     std::string line;
     std::string buffer;
-    std::cout << "File is :\n"
-              << m_filePath << std::endl;
+    
     while (m_running)
     {
         std::streampos current_pos = file.tellg();
