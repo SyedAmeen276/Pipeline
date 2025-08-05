@@ -1,5 +1,6 @@
 #include "Pipeline.hpp"
 #include <iostream>
+#include "Logger.hpp"
 
 Pipeline::Pipeline() : m_running(false) {}
 

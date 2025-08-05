@@ -2,6 +2,7 @@
 #include "TransformStage.hpp"
 #include <nlohmann/json.hpp>
 #include<iostream>
+#include "Logger.hpp"
 
 std::shared_ptr<DataPacket> TransformStage::Process(std::shared_ptr<DataPacket> pkt)
 {
@@ -16,6 +17,7 @@ std::shared_ptr<DataPacket> TransformStage::Process(std::shared_ptr<DataPacket> 
     flat["location"] = jsonParsed["metadata"]["location"];
     flat["priority"] = jsonParsed["metadata"]["priority"];
 
+    Logger::get()->info("[TransformStage] Creating a simple Flat json for id {}", flat["event_id"]);
     pkt->m_payload = flat.dump(2);
     return pkt;
 }

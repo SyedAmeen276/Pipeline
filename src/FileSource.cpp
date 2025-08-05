@@ -6,6 +6,7 @@
 #include<thread>
 #include<chrono>
 #include <nlohmann/json.hpp>
+#include "Logger.hpp"
 
 using json = nlohmann::json;
 FileSource::FileSource(const std::string &filepath) : m_filePath (filepath) {}
@@ -20,7 +21,7 @@ void FileSource::Run(PacketHandler handler)
     std::ifstream file(m_filePath);
     if (!file)
     {
-        std::cerr << "[Error] Failed to open file: " << m_filePath << std::endl;
+        Logger::get()->error("Failed to open file:{}", m_filePath);
         return;
     }
 
@@ -44,13 +45,14 @@ void FileSource::Run(PacketHandler handler)
                 json parsed = json::parse(buffer);
 
                 auto pkt = std::make_shared<DataPacket>(parsed.dump(), Name());
+                Logger::get()->info("Created a pkt and passing to First Stage of Pipeline");
                 handler(pkt);
 
                 buffer.clear();
             }
             catch (const json::parse_error &e)
             {
-                // std::cout << "Wait for data to fill up" << std::endl;
+               
             }
         }
         else
@@ -62,7 +64,6 @@ void FileSource::Run(PacketHandler handler)
     }
     if (!buffer.empty())
     {
-        std::cerr << "[Warning] Unparsed leftover data:\n"
-                  << buffer << std::endl;
+        Logger::get()->error("Unparsed leftover data {}", buffer);
     }
 }

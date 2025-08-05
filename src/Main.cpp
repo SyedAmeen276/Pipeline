@@ -10,6 +10,7 @@
 #include <vector>
 #include <memory>
 #include <csignal>
+#include "Logger.hpp"
 
 std::vector<std::unique_ptr<FileSource>> sources;
 std::unique_ptr<Pipeline> pipeline;
@@ -29,6 +30,10 @@ void SignalHandler(int signum)
 
 int main()
 {
+    Logger::Init("pipeline.log"); 
+
+    Logger::get()->info("Application started");
+    
     std::signal(SIGINT, SignalHandler);
 
     pipeline = std::make_unique<Pipeline>();

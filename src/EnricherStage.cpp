@@ -2,6 +2,7 @@
 #include "EnricherStage.hpp"
 #include<iostream>
 #include <chrono>
+#include "Logger.hpp"
 
 std::shared_ptr<DataPacket> EnricherStage::Process(std::shared_ptr<DataPacket> pkt)
 {
@@ -11,8 +12,10 @@ std::shared_ptr<DataPacket> EnricherStage::Process(std::shared_ptr<DataPacket> p
     {
         double temp = json["payload"]["temperature"];
         json["payload"]["temperature_alert"] = (temp > 30.0);
+        Logger::get()->info("[EnricherStage] Json Adding Alet field if temp > 30 {}", temp>30.0);
     }
 
+    Logger::get()->info("[EnricherStage] Json for Id {}", json["event_id"]);
     pkt->m_payload = json.dump();
     return pkt;
 }

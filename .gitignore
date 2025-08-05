@@ -3,3 +3,4 @@ obj/
 pipeline
 *.json
 build
+pipeline.log

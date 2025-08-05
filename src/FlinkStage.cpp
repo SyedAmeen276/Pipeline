@@ -2,6 +2,7 @@
 #include "FlinkStage.hpp"
 #include <iostream>
 #include <fstream>
+#include "Logger.hpp"
 
 std::shared_ptr<DataPacket> FlinkStage::Process(std::shared_ptr<DataPacket> pkt)
     {
@@ -10,7 +11,7 @@ std::shared_ptr<DataPacket> FlinkStage::Process(std::shared_ptr<DataPacket> pkt)
        json jsonParsed = json::parse(pkt->m_payload);
        if (!jsonParsed.contains("event_id"))
        {
-           std::cerr << "[FileSinkStage] Missing 'event_id' in payload\n";
+           Logger::get()->error("[FlinkStage] does not contain event_id null" );
            return nullptr;
        }
 
@@ -23,16 +24,17 @@ std::shared_ptr<DataPacket> FlinkStage::Process(std::shared_ptr<DataPacket> pkt)
        std::ofstream out(filepath);
        if (!out.is_open())
        {
-           std::cerr << "[FileSinkStage] Cannot open file: " << filepath << "\n";
+           Logger::get()->error("[FlinkStage] Cannot open file {}", filepath);
            return nullptr;
        }
        
        out << jsonParsed.dump(2) << std::endl;
+       Logger::get()->info("[FlinkStage] Creating a simple Flat json for id {}", jsonParsed["event_id"]);
        out.close();
     }
     catch (const std::exception &e)
     {
-        std::cerr << "[FileSinkStage] Error writing packet: " << e.what() << "\n";
+        Logger::get()->error("[FlinkStage] Error writing packet {}", e.what());
     }
 
     return nullptr;
