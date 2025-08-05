@@ -45,7 +45,7 @@ void FileSource::Run(PacketHandler handler)
                 json parsed = json::parse(buffer);
 
                 auto pkt = std::make_shared<DataPacket>(parsed.dump(), Name());
-                Logger::get()->info("Created a pkt and passing to First Stage of Pipeline");
+                Logger::get()->info("Created a pkt and passing to First Stage of Pipeline {}", parsed["event_id"]);
                 handler(pkt);
 
                 buffer.clear();

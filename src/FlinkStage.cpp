@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include "Logger.hpp"
+#include<chrono>
 
 std::shared_ptr<DataPacket> FlinkStage::Process(std::shared_ptr<DataPacket> pkt)
     {
@@ -27,9 +28,12 @@ std::shared_ptr<DataPacket> FlinkStage::Process(std::shared_ptr<DataPacket> pkt)
            Logger::get()->error("[FlinkStage] Cannot open file {}", filepath);
            return nullptr;
        }
-       
+       auto now = std::chrono::steady_clock::now();
+       auto latency = std::chrono::duration_cast<std::chrono::milliseconds>(now - pkt->m_timeStamp).count();
+       Logger::get()->info("[FlinkStage] Packet latency: {} ms", latency);
+
        out << jsonParsed.dump(2) << std::endl;
-       Logger::get()->info("[FlinkStage] Creating a simple Flat json for id {}", jsonParsed["event_id"]);
+       Logger::get()->info("[FlinkStage] End of the stage {}", jsonParsed["event_id"]);
        out.close();
     }
     catch (const std::exception &e)
